@@ -22,6 +22,11 @@ How to play
 In game: Esc or F1 opens the menu (save states, Insert coin, Player 2 joins, Reset, Quit).
 P, O and -/= stop, step and slow the game. Everything is remappable in the launcher.
 
+The game's own features are in the launcher's Features page and the menu's Game, Cheats and
+Training pages: free play, no damage, infinite time, one-hit knockouts, full POWER bars, an input
+display, and a Training mode that holds both fighters' health and POWER full and reads out each
+fighter's health and the last hit taken.
+
 
 What is in here
 ---------------

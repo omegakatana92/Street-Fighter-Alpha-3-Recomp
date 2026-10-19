@@ -25,9 +25,17 @@ work):
 - **Run-ahead** and the **Display** options (scaling, picture shape, window size, full screen).
 - Every key and button **remappable**, for each player.
 
-The game's own features (the cheats and training aids the sibling cps2recomp ports have) are still to
-come; they wait on addresses found on the running board, which are recorded in
-[games/sfa3/PROGRESS.md](games/sfa3/PROGRESS.md) as they are found. See [ROADMAP.md](ROADMAP.md).
+The game's own features, built on addresses found on the running board (recorded in
+[games/sfa3/PROGRESS.md](games/sfa3/PROGRESS.md)):
+
+- **Free play**, so Start works without a coin.
+- **Cheats**: no damage (either fighter), infinite time, one-hit knockouts and full POWER bars.
+- **Training**: an **input display** in players' notation, and a **Training mode** session that holds
+  both fighters' health and POWER full, stands the round's clock still, and reads out each fighter's
+  health and the last hit taken.
+
+The rest of the training mode (frame data, the combo readout, the dummy and the hit boxes) is still to
+come; it waits on the game's per-player state, which is not yet read out. See [ROADMAP.md](ROADMAP.md).
 
 `--list-features` prints the whole list. Ready-made builds for Windows, Linux and the Steam Deck go on
 the [Releases](../../releases) page.

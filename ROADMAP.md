@@ -21,27 +21,33 @@ From the toolkit, with no game work:
 - **Run-ahead** and the **Display** options (scaling, picture shape, window size, full screen).
 - Every key and button **remappable**, for each player.
 
-Built on the game's own memory (`games/sfa3/src/`): **nothing yet**. The port has just been translated;
-`make explore` drives the game's code out of the interpreter and into translated C++, and the memory
-work below is what comes next.
+Built on the game's own memory (`games/sfa3/src/`):
 
-`--list-features` prints the toolkit's list until the game's own features are added.
+- **Free play** and the **cheats**: no damage for either fighter, infinite time, one-hit knockouts, and
+  full POWER bars.
+- **Training**: an input display in players' notation, and a **Training mode** session that holds both
+  fighters' health and POWER full, stands the round's clock still, and reads out each fighter's health
+  and the last hit taken.
+
+`--list-features` prints the whole list. The rest of the training mode below — the frame data, the combo
+readout, the dummy and the hit boxes — waits on the game's per-player state being read out.
 
 ## What a finished port adds (this is the work)
 
 ### 0. Foundation — know the game's memory
 
-The credits, the round's clock and the two players' records have to be found and named in
+The credits, the round's clock and the two players' records are found and named in
 `games/sfa3/src/sfa3.h`: the health (and what the bars are drawn from), the place across the stage, the
-super (LEVEL) gauge, and the state that says what a player is doing (standing, walking, crouching, in
-the air, attacking, reeling) — which the frame data, the dummy and the hit boxes want, along with the
-attack boxes themselves.
+facing, the super (LEVEL) gauge, and the state word — found, but not yet read out (standing, walking,
+crouching and in the air are told apart; attacking and reeling are not). The state, along with the
+attack boxes, is what the frame data, the dummy and the hit boxes still want.
 
 How the toolkit finds these (all in `docs/FEATURES.md`):
 
 - `--dump-ram F:FILE` + `tools/ramfind.py DUMP=VALUE ...` — addresses that held a known value across
   several dumps.
-- `--trace LOW-HIGH:FILE` with a run that does known things at known frames.
+- `--trace LOW-HIGH:FILE` with a run that does known things at known frames (`--movie` drives the
+  game to a known place first).
 - `--watch LOW[-HIGH]` — every write to an address and the instruction that made it, read against
   `work/sfa3/program.lst`.
 - `--poke ADDR=BYTE,...` to try a guess; `--menu FRAME:KEYS` to press the menu's own rows;
@@ -49,28 +55,29 @@ How the toolkit finds these (all in `docs/FEATURES.md`):
 
 ### 1. The Features page (the game's own switches)
 
-| Feature | Kind | Needs |
-| --- | --- | --- |
-| `free_play` | on/off | the credit word |
-| `no_damage`, `no_damage_2` | on/off | each player's health and the round's full value |
-| `infinite_time` | on/off | the round's clock |
-| `one_hit` | on/off | the opponent's health |
-| `full_gauge` | on/off | the value behind each player's super bar |
-| Board/operator settings (difficulty, round time, free play) | choices | reading the EEPROM's operator settings |
-| "The game's own test menu" | command | a routine address to jump to |
+| Feature | Kind | Built | Needs |
+| --- | --- | --- | --- |
+| `free_play` | on/off | yes | the credits (`FF8076`) |
+| `no_damage`, `no_damage_2` | on/off | yes | each player's health and the round's full value |
+| `infinite_time` | on/off | yes | the round's clock (`FF8109`) |
+| `one_hit` | on/off | yes | the opponent's health |
+| `full_gauge` | on/off | yes | the value behind each player's super bar (`+0x11F`) |
+| Board/operator settings (difficulty, round time, free play) | choices | no | reading the EEPROM's operator settings |
+| "The game's own test menu" | command | no | a routine address to jump to |
 
 ### 2. Training mode (the headline feature)
 
-| Piece | What it adds | Needs |
-| --- | --- | --- |
-| Input display | what the stick holds, and for how long | each player's facing, so the notation turns to their side |
-| Frame data | startup, active, recovery, and the advantage after a hit | the state that says a move is out, per player |
-| Combo readout | hits, damage, and what of it comes back | the damage rule (a rewrite) |
-| The dummy (player 2) | stand, crouch, jump, guard, record and replay | the game's idea of a round and of guarding |
-| Hit boxes | the players' and projectiles' boxes, drawn on the picture | the box tables and the camera's place |
+| Piece | What it adds | Built | Needs |
+| --- | --- | --- | --- |
+| Input display | what the stick holds, and for how long | yes | each player's facing, so the notation turns to their side (`+0x0A`) |
+| Training mode | health and POWER held full, the clock standing, and a readout | yes | the health, the clock and the gauge (`+0x50`, `FF8109`, `+0x11F`) |
+| Frame data | startup, active, recovery, and the advantage after a hit | no | the state that says a move is out, per player |
+| Combo readout | hits, damage, and what of it comes back | no | the damage rule (a rewrite) |
+| The dummy (player 2) | stand, crouch, jump, guard, record and replay | no | the game's idea of a round and of guarding |
+| Hit boxes | the players' and projectiles' boxes, drawn on the picture | no | the box tables and the camera's place |
 
-The toolkit's `fight/` parts (`fight/fight.h`) give all of these once the game's own state is known; the
-input display is the first one and needs only the facing.
+The toolkit's `fight/` parts (`fight/fight.h`) give the rest once the game's own state is known; the
+input display and the Training mode session above build on the toolkit's HUD alone and need none of it.
 
 ### 3. Alternative modes
 
@@ -93,11 +100,13 @@ mode and the widescreen possible, and it is the part most worth doing carefully.
 
 ## Recommended order
 
-1. **The foundation** — the credits, the clock and the player records (health, position, facing, state,
-   gauge); everything else builds on it.
-2. **The Features page** — free play and the cheats, small and self-contained.
-3. **Training mode** — the input display first, then the frame data, the combo readout, the dummy and
-   the hit boxes, on the toolkit's `fight/` parts.
+1. **The foundation** — done: the credits, the clock and the player records (health, position, facing,
+   gauge) are named in `sfa3.h`; the state word is found and its standing, walking and airborne values
+   read, the rest still to pin down.
+2. **The Features page** — done: free play and the cheats.
+3. **Training mode** — the input display and the Training mode session are in; the frame data, the combo
+   readout, the dummy and the hit boxes wait on the state word being read out (and, for the combo
+   readout, on the damage rewrite below).
 4. **Readable rewrites** — needed by 3 and 5, and correctness.
 5. **Widescreen.**
 6. **Alternative modes.**
